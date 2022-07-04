@@ -15,62 +15,71 @@ def getdata(localnum,output_name):
         soup = bs(res.text,'lxml')
 
         for i in range(20):
-            table = soup.select('.row')[i]
-            title = table.find_all('div','LongInfoCard_Type_Name')[1].text
-            address = table.find_all('div','LongInfoCard_Type_Address')[0].find_all('span')[0].text
-            house_type = table.find_all('div','LongInfoCard_Type_Address')[0].find_all('span')[2].text
-            age = table.find_all('div','LongInfoCard_Type_Address')[0].find_all('span')[1].text.replace('--','0').replace('年','')
-            structure = table.find_all('div','LongInfoCard_Type_HouseInfo')[0].find_all('span')
-            area = structure[0].text.replace('建坪','').replace('地坪','')
-            price = soup.find_all('span',style='font-size:1.75em;font-weight:500;color:#dd2525')[i].text.replace(',','')
+            try:
+                table = soup.select('.row')[i]
+                title = table.find_all('div','LongInfoCard_Type_Name')[1].text
+                address = table.find_all('div','LongInfoCard_Type_Address')[0].find_all('span')[0].text
+                house_type = table.find_all('div','LongInfoCard_Type_Address')[0].find_all('span')[2].text
+                age = table.find_all('div','LongInfoCard_Type_Address')[0].find_all('span')[1].text.replace('--','0').replace('年','')
+                structure = table.find_all('div','LongInfoCard_Type_HouseInfo')[0].find_all('span')
+                area = structure[0].text.replace('建坪','').replace('地坪','')
+                price = soup.find_all('span',style='font-size:1.75em;font-weight:500;color:#dd2525')[i].text.replace(',','')
 
-            s = structure[2].text
-            if ('房' in s) & ('廳' in s) & ('衛' in s):
-                room=s.split('房')[0]
-                hall=s.split('房')[1].split('廳')[0]
-                bathroom=s.split('房')[1].split('廳')[1].split('衛')[0]
-            elif ('房' in s) & ('廳' in s):
-                room=s.split('房')[0]
-                hall=s.split('房')[1].split('廳')[0]
-                bathroom='0'
-            elif ('廳' in s) & ('衛' in s):
-                room='0'
-                hall=s.split('廳')[0]
-                bathroom=s.split('廳')[1].split('衛')[0]
-            elif ('房' in s) & ('衛' in s):
-                room=s.split('房')[0]
-                hall='0'
-                bathroom=s.split('房')[1].split('衛')[0]
-            elif '房' in s:
-                room=s.split('房')[0]
-                hall='0'
-                bathroom='0'
-            elif '廳' in s:
-                room='0'
-                hall=s.split('廳')[0]
-                bathroom='0'
-            elif '衛' in s:
-                room='0'
-                hall='0'
-                bathroom=s.split('衛')[0]
-            else:
-                print(s)
+                s = structure[2].text
+                if ('房' in s) & ('廳' in s) & ('衛' in s):
+                    room=s.split('房')[0]
+                    hall=s.split('房')[1].split('廳')[0]
+                    bathroom=s.split('房')[1].split('廳')[1].split('衛')[0]
+                elif ('房' in s) & ('廳' in s):
+                    room=s.split('房')[0]
+                    hall=s.split('房')[1].split('廳')[0]
+                    bathroom='0'
+                elif ('廳' in s) & ('衛' in s):
+                    room='0'
+                    hall=s.split('廳')[0]
+                    bathroom=s.split('廳')[1].split('衛')[0]
+                elif ('房' in s) & ('衛' in s):
+                    room=s.split('房')[0]
+                    hall='0'
+                    bathroom=s.split('房')[1].split('衛')[0]
+                elif '房' in s:
+                    room=s.split('房')[0]
+                    hall='0'
+                    bathroom='0'
+                elif '廳' in s:
+                    room='0'
+                    hall=s.split('廳')[0]
+                    bathroom='0'
+                elif '衛' in s:
+                    room='0'
+                    hall='0'
+                    bathroom=s.split('衛')[0]
 
-            if "-" in structure[3].text.split('/')[0]:
-                floor=structure[3].text.split('/')[0].split('-')[1].replace('樓','')
-            else:
-                floor=structure[3].text.split('/')[0].replace('樓','')
+                else:
+                    room='0'
+                    hall='0'
+                    bathroom='0'
+                    print(s)
 
-            total_floor=structure[3].text.split('/')[1].replace('樓','')
-            perprice = round(int(price) / float(area), 2) 
+                if "-" in structure[3].text.split('/')[0]:
+                    floor=structure[3].text.split('/')[0].split('-')[1].replace('樓','')
+                else:
+                    floor=structure[3].text.split('/')[0].replace('樓','')
 
-            temp = [title, address, house_type, age, area, price, room, hall, bathroom, floor, total_floor, perprice]
-            result.append(temp)
+                total_floor=structure[3].text.split('/')[1].replace('樓','')
+                perprice = round(int(price) / float(area), 2) 
+
+                temp = [title, address, house_type, age, area, price, room, hall, bathroom, floor, total_floor, perprice]
+                result.append(temp)
+            except:
+                print(z,i)
 
     data = pd.DataFrame(result, columns=['title', 'address', 'house_type', 'age', 'area', 'price', 'room', 'hall', 
                                      'bathroom', 'floor', 'total_floor', 'perprice'])
-    data.to_csv(output_name+".csv",encoding='utf-8')
-
-getdata('106','信義房屋大安')
-getdata('110','信義房屋信義')
-getdata('116','信義房屋文山')
+    data.to_sql('Housesell', engine, if_exists='append', index= False)
+    print('Read from and write to Mysql table successfully!')
+    
+target=[['106','信義房屋大安'],['110','信義房屋信義'],['116','信義房屋文山']]
+engine = create_engine('mysql+pymysql://admin:dv102dv102@database-1.cb5frtthut3g.us-west-1.rds.amazonaws.com:3306/Housesell')
+for x,y in target:
+    getdata(x,y)
