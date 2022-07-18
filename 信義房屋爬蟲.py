@@ -80,6 +80,6 @@ def getdata(localnum,output_name):
     print('Read from and write to Mysql table successfully!')
     
 target=[['106','信義房屋大安'],['110','信義房屋信義'],['116','信義房屋文山']]
-engine = create_engine('mysql+pymysql://admin:dv102dv102@database-1.cb5frtthut3g.us-west-1.rds.amazonaws.com:3306/Housesell')
+engine = create_engine('mysql+pymysql://account:password@databaseIP:3306/databasename')
 for x,y in target:
     getdata(x,y)
